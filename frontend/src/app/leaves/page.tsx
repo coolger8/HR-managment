@@ -8,12 +8,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { Modal } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
 
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+
+  const { register, handleSubmit, reset } = useForm<{
+    employeeId: number | string;
+    type: string;
+    startDate: string;
+    endDate: string;
+    reason: string;
+  }>();
 
   useEffect(() => {
     fetchData();
@@ -139,11 +151,99 @@ export default function LeavesPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Leave Management</h1>
-          <Button className="flex items-center space-x-2">
+          <Button className="flex items-center space-x-2" onClick={() => setIsRequestOpen(true)}>
             <Plus className="h-4 w-4" />
             <span>Request Leave</span>
           </Button>
         </div>
+
+        <Modal
+          isOpen={isRequestOpen}
+          onClose={() => setIsRequestOpen(false)}
+          title="Request Leave"
+          size="lg"
+        >
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(async (values) => {
+              const start = new Date(values.startDate);
+              const end = new Date(values.endDate);
+              const daysRequested = Math.max(
+                1,
+                Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+              );
+              try {
+                await leaveAPI.create({
+                  employeeId: Number(values.employeeId),
+                  type: values.type as Leave['type'],
+                  startDate: values.startDate,
+                  endDate: values.endDate,
+                  reason: values.reason,
+                  daysRequested,
+                });
+                setIsRequestOpen(false);
+                reset();
+                fetchData();
+              } catch (err) {
+                console.error('Error creating leave:', err);
+              }
+            })}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Employee</label>
+                <select
+                  className="mt-1 w-full border rounded-md p-2"
+                  {...register('employeeId', { required: true })}
+                >
+                  <option value="">Select employee</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} ({emp.employeeId})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Type</label>
+                <select
+                  className="mt-1 w-full border rounded-md p-2"
+                  {...register('type', { required: true })}
+                >
+                  {['vacation', 'sick', 'personal', 'maternity', 'paternity'].map((t) => (
+                    <option key={t} value={t}>
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Start Date</label>
+                <Input type="date" className="mt-1" {...register('startDate', { required: true })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">End Date</label>
+                <Input type="date" className="mt-1" {...register('endDate', { required: true })} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Reason</label>
+                <textarea
+                  className="mt-1 w-full border rounded-md p-2"
+                  rows={3}
+                  {...register('reason', { required: true })}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button type="button" variant="outline" onClick={() => setIsRequestOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                Submit
+              </Button>
+            </div>
+          </form>
+        </Modal>
 
         {/* Status Filter */}
         <Card>

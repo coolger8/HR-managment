@@ -21,10 +21,10 @@ api.interceptors.request.use((config) => {
 export const authAPI = {
   login: (credentials: { username: string; password: string }) =>
     api.post<{ access_token: string; user: User }>('/auth/login', credentials),
-  
+
   register: (userData: { username: string; email: string; password: string; role?: string }) =>
     api.post<User>('/auth/register', userData),
-  
+
   getProfile: () =>
     api.get<User>('/auth/profile'),
 };
@@ -64,16 +64,20 @@ export const attendanceAPI = {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    return api.get<Attendance[]>(`/attendance?${params.toString()}`);
+    // 防缓存参数，确保获取最新数据
+    params.append('_ts', Date.now().toString());
+    return api.get<Attendance[]>(`/attendance?${params.toString()}`, {
+      headers: { 'Cache-Control': 'no-cache' },
+    });
   },
   getById: (id: number) => api.get<Attendance>(`/attendance/${id}`),
   create: (attendance: Partial<Attendance>) => api.post<Attendance>('/attendance', attendance),
   update: (id: number, attendance: Partial<Attendance>) => api.patch<Attendance>(`/attendance/${id}`, attendance),
   delete: (id: number) => api.delete(`/attendance/${id}`),
   getByEmployee: (employeeId: number) => api.get<Attendance[]>(`/attendance/employee/${employeeId}`),
-  checkIn: (employeeId: number, checkInTime: string) => 
+  checkIn: (employeeId: number, checkInTime: string) =>
     api.post<Attendance>('/attendance/check-in', { employeeId, checkInTime }),
-  checkOut: (employeeId: number, checkOutTime: string) => 
+  checkOut: (employeeId: number, checkOutTime: string) =>
     api.post<Attendance>('/attendance/check-out', { employeeId, checkOutTime }),
 };
 
@@ -88,9 +92,9 @@ export const leaveAPI = {
   update: (id: number, leave: Partial<Leave>) => api.patch<Leave>(`/leaves/${id}`, leave),
   delete: (id: number) => api.delete(`/leaves/${id}`),
   getByEmployee: (employeeId: number) => api.get<Leave[]>(`/leaves/employee/${employeeId}`),
-  approve: (id: number, approvedBy: number) => 
+  approve: (id: number, approvedBy: number) =>
     api.post<Leave>(`/leaves/${id}/approve`, { approvedBy }),
-  reject: (id: number, rejectionReason: string) => 
+  reject: (id: number, rejectionReason: string) =>
     api.post<Leave>(`/leaves/${id}/reject`, { rejectionReason }),
 };
 

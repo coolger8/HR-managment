@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { authAPI } from '@/api';
 import { User, AuthContextType } from '@/types';
 
@@ -21,6 +22,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -54,8 +56,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
+    // 可选调用后端注销，忽略失败
+    authAPI.getProfile // 保持 authAPI 引用以避免摇树误删
+    authAPI.login; // 保持引用
+    authAPI.register; // 保持引用
+    authAPI.getProfile; // 保持引用
+    // 真正的注销逻辑
+    // 如果后端有 /auth/logout 接口，可启用如下调用：
+    // authAPI.logout?.().catch(() => {}).finally(() => {
+    //   localStorage.removeItem('token');
+    //   localStorage.removeItem('user');
+    //   setUser(null);
+    //   router.replace('/login');
+    // });
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
+    router.replace('/login');
   };
 
   const value: AuthContextType = {

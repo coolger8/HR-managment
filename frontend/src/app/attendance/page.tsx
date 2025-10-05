@@ -17,12 +17,19 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = useState(true);
   const [isManualOpen, setIsManualOpen] = useState(false);
-  const [manualData, setManualData] = useState({
+  const [manualData, setManualData] = useState<{
+    employeeId: string;
+    date: string;
+    checkIn: string;
+    checkOut: string;
+    status: 'present' | 'late' | 'absent';
+    notes: string;
+  }>({
     employeeId: '',
     date: new Date().toISOString().split('T')[0],
     checkIn: '',
     checkOut: '',
-    status: 'present' as const,
+    status: 'present',
     notes: '',
   });
 
@@ -323,13 +330,15 @@ export default function AttendancePage() {
             onSubmit={async (e) => {
               e.preventDefault();
               try {
-                // 执行手动签到/签退
-                if (manualData.employeeId && manualData.checkIn) {
-                  await attendanceAPI.checkIn(parseInt(manualData.employeeId), manualData.checkIn);
-                }
-                if (manualData.employeeId && manualData.checkOut) {
-                  await attendanceAPI.checkOut(parseInt(manualData.employeeId), manualData.checkOut);
-                }
+                // 提交完整手动考勤记录
+                await attendanceAPI.create({
+                  employeeId: parseInt(manualData.employeeId),
+                  date: manualData.date,
+                  checkIn: manualData.checkIn || undefined,
+                  checkOut: manualData.checkOut || undefined,
+                  status: manualData.status,
+                  notes: manualData.notes,
+                });
                 await fetchData();
                 setIsManualOpen(false);
               } catch (err) {

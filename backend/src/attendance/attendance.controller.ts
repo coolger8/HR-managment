@@ -6,7 +6,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @Controller('attendance')
 @UseGuards(JwtAuthGuard)
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(private readonly attendanceService: AttendanceService) { }
 
   @Post()
   create(@Body() createAttendanceDto: Partial<Attendance>) {
@@ -16,7 +16,11 @@ export class AttendanceController {
   @Get()
   findAll(@Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
     if (startDate && endDate) {
-      return this.attendanceService.findByDateRange(new Date(startDate), new Date(endDate));
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      return this.attendanceService.findByDateRange(start, end);
     }
     return this.attendanceService.findAll();
   }
