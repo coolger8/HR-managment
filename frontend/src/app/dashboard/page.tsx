@@ -3,14 +3,17 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { employeeAPI, departmentAPI, attendanceAPI, leaveAPI } from '@/api';
+import { outsourcingCompanyApi, outsourcingEmployeeApi } from '@/api/outsourcing';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Users, Building2, UserCheck, Calendar } from 'lucide-react';
+import { Users, Building2, UserCheck, Calendar, Briefcase, UserCircle } from 'lucide-react';
 
 interface DashboardStats {
   totalEmployees: number;
   totalDepartments: number;
   todayAttendance: number;
   pendingLeaves: number;
+  totalOutsourcingCompanies: number;
+  totalOutsourcingEmployees: number;
 }
 
 export default function DashboardPage() {
@@ -19,17 +22,21 @@ export default function DashboardPage() {
     totalDepartments: 0,
     todayAttendance: 0,
     pendingLeaves: 0,
+    totalOutsourcingCompanies: 0,
+    totalOutsourcingEmployees: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [employees, departments, attendance, leaves] = await Promise.all([
+        const [employees, departments, attendance, leaves, outsourcingCompanies, outsourcingEmployees] = await Promise.all([
           employeeAPI.getAll(),
           departmentAPI.getAll(),
           attendanceAPI.getAll(),
           leaveAPI.getAll('pending'),
+          outsourcingCompanyApi.getAll(),
+          outsourcingEmployeeApi.getAll(),
         ]);
 
         // Get today's date
@@ -43,6 +50,8 @@ export default function DashboardPage() {
           totalDepartments: departments.data.length,
           todayAttendance,
           pendingLeaves: leaves.data.length,
+          totalOutsourcingCompanies: Array.isArray(outsourcingCompanies.data) ? outsourcingCompanies.data.length : 0,
+          totalOutsourcingEmployees: Array.isArray(outsourcingEmployees.data) ? outsourcingEmployees.data.length : 0,
         });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -83,6 +92,20 @@ export default function DashboardPage() {
       description: 'Leave requests pending approval',
       color: 'text-orange-600',
     },
+    {
+      title: 'Outsourcing Companies',
+      value: stats.totalOutsourcingCompanies,
+      icon: Briefcase,
+      description: 'Active outsourcing companies',
+      color: 'text-indigo-600',
+    },
+    {
+      title: 'Outsourcing Employees',
+      value: stats.totalOutsourcingEmployees,
+      icon: UserCircle,
+      description: 'Active outsourcing employees',
+      color: 'text-pink-600',
+    },
   ];
 
   if (isLoading) {
@@ -115,7 +138,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
           {statsCards.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -179,6 +202,24 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </button>
+                <button className="p-4 text-left border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Briefcase className="h-5 w-5 text-indigo-600" />
+                    <div>
+                      <p className="font-medium">Add Outsourcing Company</p>
+                      <p className="text-sm text-gray-500">Register new company</p>
+                    </div>
+                  </div>
+                </button>
+                <button className="p-4 text-left border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <UserCircle className="h-5 w-5 text-pink-600" />
+                    <div>
+                      <p className="font-medium">Add Outsourcing Employee</p>
+                      <p className="text-sm text-gray-500">Register new employee</p>
+                    </div>
+                  </div>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -211,6 +252,20 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm font-medium">Leave request submitted</p>
                     <p className="text-xs text-gray-500">1 day ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                  <div>
+                    <p className="text-sm font-medium">New outsourcing company added</p>
+                    <p className="text-xs text-gray-500">2 days ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                  <div>
+                    <p className="text-sm font-medium">New outsourcing employee registered</p>
+                    <p className="text-xs text-gray-500">3 days ago</p>
                   </div>
                 </div>
               </div>

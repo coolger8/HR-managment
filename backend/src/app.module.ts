@@ -10,6 +10,8 @@ import { Department } from './department/department.entity';
 import { Position } from './position/position.entity';
 import { Attendance } from './attendance/attendance.entity';
 import { Leave } from './leave/leave.entity';
+import { OutsourcingCompany } from './outsourcing-company/outsourcing-company.entity';
+import { OutsourcingEmployee } from './outsourcing-employee/outsourcing-employee.entity';
 
 // Module imports
 import { AuthModule } from './auth/auth.module';
@@ -18,6 +20,8 @@ import { DepartmentModule } from './department/department.module';
 import { PositionModule } from './position/position.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { LeaveModule } from './leave/leave.module';
+import { OutsourcingCompanyModule } from './outsourcing-company/outsourcing-company.module';
+import { OutsourcingEmployeeModule } from './outsourcing-employee/outsourcing-employee.module';
 
 @Module({
   imports: [
@@ -25,15 +29,17 @@ import { LeaveModule } from './leave/leave.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(databaseConfig),
-    TypeOrmModule.forFeature([User, Employee, Department, Position, Attendance, Leave]),
+    TypeOrmModule.forFeature([User, Employee, Department, Position, Attendance, Leave, OutsourcingCompany, OutsourcingEmployee]),
     AuthModule,
     EmployeeModule,
     DepartmentModule,
     PositionModule,
     AttendanceModule,
     LeaveModule,
+    OutsourcingCompanyModule,
+    OutsourcingEmployeeModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

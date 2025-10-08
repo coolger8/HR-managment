@@ -12,9 +12,10 @@ interface AddDepartmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  department?: Department | null; // Optional department for editing
 }
 
-export function AddDepartmentModal({ isOpen, onClose, onSuccess }: AddDepartmentModalProps) {
+export function AddDepartmentModal({ isOpen, onClose, onSuccess, department }: AddDepartmentModalProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,16 +31,27 @@ export function AddDepartmentModal({ isOpen, onClose, onSuccess }: AddDepartment
   useEffect(() => {
     if (isOpen) {
       fetchEmployees();
-      // Reset form when modal opens
-      setFormData({
-        name: '',
-        description: '',
-        location: '',
-        managerId: '',
-        isActive: true,
-      });
+      // Set form data based on whether we're editing or creating
+      if (department) {
+        setFormData({
+          name: department.name,
+          description: department.description || '',
+          location: department.location || '',
+          managerId: department.managerId ? department.managerId.toString() : '',
+          isActive: department.isActive !== undefined ? department.isActive : true,
+        });
+      } else {
+        // Reset form when creating new department
+        setFormData({
+          name: '',
+          description: '',
+          location: '',
+          managerId: '',
+          isActive: true,
+        });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, department]);
 
   const fetchEmployees = async () => {
     setIsLoading(true);
@@ -71,12 +83,18 @@ export function AddDepartmentModal({ isOpen, onClose, onSuccess }: AddDepartment
         managerId: formData.managerId ? parseInt(formData.managerId) : undefined,
       };
 
-      await departmentAPI.create(departmentData);
+      if (department) {
+        // Update existing department
+        await departmentAPI.update(department.id, departmentData);
+      } else {
+        // Create new department
+        await departmentAPI.create(departmentData);
+      }
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating department:', error);
-      alert('Failed to create department. Please try again.');
+      console.error('Error saving department:', error);
+      alert(`Failed to ${department ? 'update' : 'create'} department. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +102,7 @@ export function AddDepartmentModal({ isOpen, onClose, onSuccess }: AddDepartment
 
   if (isLoading) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Add New Department">
+      <Modal isOpen={isOpen} onClose={onClose} title={department ? "Edit Department" : "Add New Department"}>
         <div className="flex items-center justify-center py-8">
           <div className="text-center">Loading...</div>
         </div>
@@ -93,7 +111,7 @@ export function AddDepartmentModal({ isOpen, onClose, onSuccess }: AddDepartment
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Department">
+    <Modal isOpen={isOpen} onClose={onClose} title={department ? "Edit Department" : "Add New Department"}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Department Name */}
         <div>
@@ -180,7 +198,7 @@ export function AddDepartmentModal({ isOpen, onClose, onSuccess }: AddDepartment
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             <Save className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Creating...' : 'Create Department'}
+            {isSubmitting ? (department ? 'Updating...' : 'Creating...') : (department ? 'Update Department' : 'Create Department')}
           </Button>
         </div>
       </form>

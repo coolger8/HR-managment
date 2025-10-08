@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 import { User, Employee, Department, Position, Attendance, Leave } from '@/types';
+import { OutsourcingCompany, OutsourcingEmployee } from '@/types/outsourcing';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -96,6 +97,25 @@ export const leaveAPI = {
     api.post<Leave>(`/leaves/${id}/approve`, { approvedBy }),
   reject: (id: number, rejectionReason: string) =>
     api.post<Leave>(`/leaves/${id}/reject`, { rejectionReason }),
+};
+
+// Outsourcing Company API
+export const outsourcingCompanyAPI = {
+  getAll: () => api.get<OutsourcingCompany[]>('/outsourcing-companies'),
+  getById: (id: number) => api.get<OutsourcingCompany>(`/outsourcing-companies/${id}`),
+  create: (company: any) => api.post<OutsourcingCompany>('/outsourcing-companies', company),
+  update: (id: number, company: any) => api.patch<OutsourcingCompany>(`/outsourcing-companies/${id}`, company),
+  delete: (id: number) => api.delete(`/outsourcing-companies/${id}`),
+};
+
+// Outsourcing Employee API
+export const outsourcingEmployeeAPI = {
+  getAll: () => api.get<OutsourcingEmployee[]>('/outsourcing-employees'),
+  getById: (id: number) => api.get<OutsourcingEmployee>(`/outsourcing-employees/${id}`),
+  getByCompany: (companyId: number) => api.get<OutsourcingEmployee[]>(`/outsourcing-employees/company/${companyId}`),
+  create: (employee: any) => api.post<OutsourcingEmployee>('/outsourcing-employees', employee),
+  update: (id: number, employee: any) => api.patch<OutsourcingEmployee>(`/outsourcing-employees/${id}`, employee),
+  delete: (id: number) => api.delete(`/outsourcing-employees/${id}`),
 };
 
 export default api;

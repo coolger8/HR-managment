@@ -16,6 +16,7 @@ export default function DepartmentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -46,6 +47,28 @@ export default function DepartmentsPage() {
     dept.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     dept.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleEdit = (department: Department) => {
+    setEditingDepartment(department);
+    setIsAddModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
+      try {
+        await departmentAPI.delete(id);
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting department:', error);
+        alert('Failed to delete department. Please try again.');
+      }
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsAddModalOpen(false);
+    setEditingDepartment(null);
+  };
 
   if (isLoading) {
     return (
@@ -150,10 +173,10 @@ export default function DepartmentsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex space-x-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(department)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(department.id)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
@@ -233,11 +256,12 @@ export default function DepartmentsPage() {
           </Card>
         )}
 
-        {/* Add Department Modal */}
+        {/* Add/Edit Department Modal */}
         <AddDepartmentModal
           isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+          onClose={handleModalClose}
           onSuccess={fetchData}
+          department={editingDepartment}
         />
       </div>
     </DashboardLayout>

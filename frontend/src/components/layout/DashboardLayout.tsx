@@ -14,7 +14,9 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Briefcase,
+  UserCog
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -62,6 +64,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
     { name: 'Employees', href: '/employees', icon: Users },
     { name: 'Departments', href: '/departments', icon: Building2 },
+    { name: 'Outsourcing Companies', href: '/outsourcing-companies', icon: Briefcase },
+    { name: 'Outsourcing Employees', href: '/outsourcing-employees', icon: UserCog },
     { name: 'Attendance', href: '/attendance', icon: UserCheck },
     { name: 'Leave Management', href: '/leaves', icon: Calendar },
     { name: 'Settings', href: '/settings', icon: Settings },

@@ -18,6 +18,7 @@ export default function EmployeesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -63,6 +64,28 @@ export default function EmployeesPage() {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
+  };
+
+  const handleEdit = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setIsAddModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+      try {
+        await employeeAPI.delete(id);
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        alert('Failed to delete employee. Please try again.');
+      }
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsAddModalOpen(false);
+    setEditingEmployee(null);
   };
 
   if (isLoading) {
@@ -185,10 +208,10 @@ export default function EmployeesPage() {
                     </CardDescription>
                   </div>
                   <div className="flex space-x-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(employee)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(employee.id)}>
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
@@ -262,11 +285,12 @@ export default function EmployeesPage() {
           </Card>
         )}
 
-        {/* Add Employee Modal */}
+        {/* Add/Edit Employee Modal */}
         <AddEmployeeModal
           isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+          onClose={handleModalClose}
           onSuccess={fetchData}
+          employee={editingEmployee}
         />
       </div>
     </DashboardLayout>

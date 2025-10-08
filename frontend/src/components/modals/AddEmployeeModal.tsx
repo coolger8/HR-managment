@@ -12,9 +12,10 @@ interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  employee?: Employee | null; // Optional employee for editing
 }
 
-export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModalProps) {
+export function AddEmployeeModal({ isOpen, onClose, onSuccess, employee }: AddEmployeeModalProps) {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [managers, setManagers] = useState<Employee[]>([]);
@@ -36,32 +37,53 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
     departmentId: '',
     positionId: '',
     managerId: '',
-    status: 'active' as const,
+    status: 'active' as 'active' | 'inactive' | 'terminated',
   });
 
   useEffect(() => {
     if (isOpen) {
       fetchData();
-      // Reset form when modal opens
-      setFormData({
-        employeeId: '',
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        dateOfBirth: '',
-        hireDate: '',
-        salary: '',
-        address: '',
-        emergencyContact: '',
-        emergencyPhone: '',
-        departmentId: '',
-        positionId: '',
-        managerId: '',
-        status: 'active',
-      });
+      // Set form data based on whether we're editing or creating
+      if (employee) {
+        setFormData({
+          employeeId: employee.employeeId,
+          firstName: employee.firstName,
+          lastName: employee.lastName,
+          email: employee.email,
+          phone: employee.phone || '',
+          dateOfBirth: employee.dateOfBirth ? employee.dateOfBirth.split('T')[0] : '',
+          hireDate: employee.hireDate ? employee.hireDate.split('T')[0] : '',
+          salary: employee.salary.toString(),
+          address: employee.address || '',
+          emergencyContact: employee.emergencyContact || '',
+          emergencyPhone: employee.emergencyPhone || '',
+          departmentId: employee.departmentId ? employee.departmentId.toString() : '',
+          positionId: employee.positionId ? employee.positionId.toString() : '',
+          managerId: employee.managerId ? employee.managerId.toString() : '',
+          status: employee.status as 'active' | 'inactive' | 'terminated',
+        });
+      } else {
+        // Reset form when creating new employee
+        setFormData({
+          employeeId: '',
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          dateOfBirth: '',
+          hireDate: '',
+          salary: '',
+          address: '',
+          emergencyContact: '',
+          emergencyPhone: '',
+          departmentId: '',
+          positionId: '',
+          managerId: '',
+          status: 'active',
+        });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, employee]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -103,12 +125,18 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
         managerId: formData.managerId ? parseInt(formData.managerId) : undefined,
       };
 
-      await employeeAPI.create(employeeData);
+      if (employee) {
+        // Update existing employee
+        await employeeAPI.update(employee.id, employeeData);
+      } else {
+        // Create new employee
+        await employeeAPI.create(employeeData);
+      }
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating employee:', error);
-      alert('Failed to create employee. Please try again.');
+      console.error('Error saving employee:', error);
+      alert(`Failed to ${employee ? 'update' : 'create'} employee. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +144,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
 
   if (isLoading) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Add New Employee" size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title={employee ? "Edit Employee" : "Add New Employee"} size="lg">
         <div className="flex items-center justify-center py-8">
           <div className="text-center">Loading...</div>
         </div>
@@ -125,7 +153,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Employee" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={employee ? "Edit Employee" : "Add New Employee"} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Employee ID */}
@@ -139,6 +167,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
               onChange={handleInputChange}
               placeholder="e.g., EMP001"
               required
+              disabled={!!employee} // Disable employee ID when editing
             />
           </div>
 
@@ -368,7 +397,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             <Save className="h-4 w-4 mr-2" />
-            {isSubmitting ? 'Creating...' : 'Create Employee'}
+            {isSubmitting ? (employee ? 'Updating...' : 'Creating...') : (employee ? 'Update Employee' : 'Create Employee')}
           </Button>
         </div>
       </form>
